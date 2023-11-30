@@ -1,13 +1,16 @@
 from enum import Enum
 
+import numpy as np
+
+
 class Direccion(Enum):
-    ARRIBA = 1
-    ABAJO = 2
-    IZQUIERDA = 3
-    DERECHA = 4
+    ARRIBA = 0
+    ABAJO = 1
+    IZQUIERDA = 2
+    DERECHA = 3
 
 class Tablero:
-    def __init__(self, pos):
+    def __init__(self, pos, num_ex):
         self.filas = 3
         self.columnas = 4
         self.tablero = [[' ' for _ in range(self.columnas)] for _ in range(self.filas)]
@@ -17,14 +20,30 @@ class Tablero:
         self.cell_values = [[]]
         self.final_states = []
         self.discount_factor = 0.90
-        self.Q_matrix = [[]]
+        self.Q_matrix = None
+        if num_ex == 1:
+            self.init_matrix_ex1()
+        if num_ex == 2:
+            self.init_matrix_ex2()
 
-    def init_cell_values_to(self, num, goal_value = None, penalty_value = None):
+    def init_matrix_ex1(self):
+        num = -1
+        goal_value = 100
         self.cell_values = [[num for _ in range(4)] for _ in range(3)]
-        self.Q_matrix = [[num for _ in range(4)] for _ in range(3)]
         self.cell_values[0][3] = goal_value
-        self.Q_matrix[0][3] = goal_value
-        return self.cell_values
+        self.Q_matrix = np.random.uniform(low=-1, high=1, size=[3,4,4])
+
+    def init_matrix_ex2(self):
+        num = -1
+        goal_value = 100
+        self.cell_values = [[-3, -2, -1, 100],[-4, 0, -2, -1],[-5, -4, -3, -2]]
+        self.Q_matrix = np.random.uniform(low=-1, high=1, size=[3,4,4])
+
+    def print_Q(self):
+        for i in range(self.Q_matrix.shape[0]):
+            print(f"Matriz {i + 1}:")
+            print(self.Q_matrix[i])
+            print()
 
     def init_final_states(self, state_list):
         self.final_states = state_list
@@ -39,16 +58,16 @@ class Tablero:
         positions = []
         pos = self.posicion_actual
         if self.check_movement(Direccion.ARRIBA):
-            next_movements.append(Direccion.ARRIBA)
+            next_movements.append(Direccion.ARRIBA.value)
             positions.append((pos[0] - 1, pos[1]))
         if self.check_movement(Direccion.ABAJO):
-            next_movements.append(Direccion.ABAJO)
+            next_movements.append(Direccion.ABAJO.value)
             positions.append((pos[0] + 1, pos[1]))
         if self.check_movement(Direccion.DERECHA):
-            next_movements.append(Direccion.DERECHA)
+            next_movements.append(Direccion.DERECHA.value)
             positions.append((pos[0], pos[1] + 1))
         if self.check_movement(Direccion.IZQUIERDA):
-            next_movements.append(Direccion.IZQUIERDA)
+            next_movements.append(Direccion.IZQUIERDA.value)
             positions.append((pos[0], pos[1] - 1))
         return next_movements, positions
     def imprimir_tablero(self):
@@ -61,7 +80,8 @@ class Tablero:
         print('------------------')
 
     def move(self, direccion):
-        if direccion == Direccion.ARRIBA:
+
+        if direccion == Direccion.ARRIBA.value:
             if self.posicion_actual[0] > 0 and (self.posicion_actual[0]-1, self.posicion_actual[1]) != (1, 1):
                 self.tablero[self.posicion_actual[0]][self.posicion_actual[1]] = ' '  # Limpiar la posición actual
                 self.posicion_actual = (self.posicion_actual[0] - 1, self.posicion_actual[1])  # Mover hacia arriba
@@ -70,7 +90,7 @@ class Tablero:
             else:
                 print("¡No puedes moverte arriba")
                 return False
-        elif direccion == Direccion.ABAJO:
+        elif direccion == Direccion.ABAJO.value:
             if self.posicion_actual[0] < self.filas - 1 and (self.posicion_actual[0] + 1, self.posicion_actual[1]) != (1, 1):
                 self.tablero[self.posicion_actual[0]][self.posicion_actual[1]] = ' '  # Limpiar la posición actual
                 self.posicion_actual = (self.posicion_actual[0] + 1, self.posicion_actual[1])  # Mover hacia abajo
@@ -79,7 +99,7 @@ class Tablero:
             else:
                 print("¡No puedes moverte abajo!")
                 return False
-        elif direccion == Direccion.IZQUIERDA:
+        elif direccion == Direccion.IZQUIERDA.value:
             if self.posicion_actual[1] > 0 and (self.posicion_actual[0], self.posicion_actual[1] - 1) != (1, 1):
                 self.tablero[self.posicion_actual[0]][self.posicion_actual[1]] = ' '  # Limpiar la posición actual
                 self.posicion_actual = (self.posicion_actual[0], self.posicion_actual[1] - 1)  # Mover hacia la izquierda
@@ -88,7 +108,7 @@ class Tablero:
             else:
                 print("¡No puedes moverte a la izquierda!")
                 return False
-        elif direccion == Direccion.DERECHA:
+        elif direccion == Direccion.DERECHA.value:
             if self.posicion_actual[1] < self.columnas - 1 and (self.posicion_actual[0], self.posicion_actual[1] + 1) != (1, 1):
                 self.tablero[self.posicion_actual[0]][self.posicion_actual[1]] = ' '  # Limpiar la posición actual
                 self.posicion_actual = (self.posicion_actual[0], self.posicion_actual[1] + 1)  # Mover hacia la derecha
