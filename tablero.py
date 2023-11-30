@@ -10,7 +10,7 @@ class Direccion(Enum):
     DERECHA = 3
 
 class Tablero:
-    def __init__(self, pos, num_ex):
+    def __init__(self, pos, num_reward):
         self.filas = 3
         self.columnas = 4
         self.tablero = [[' ' for _ in range(self.columnas)] for _ in range(self.filas)]
@@ -21,19 +21,19 @@ class Tablero:
         self.final_states = []
         self.discount_factor = 0.90
         self.Q_matrix = None
-        if num_ex == 1:
-            self.init_matrix_ex1()
-        if num_ex == 2:
-            self.init_matrix_ex2()
+        if num_reward == 1:
+            self.init_matrix_reward_1()
+        if num_reward == 2:
+            self.init_matrix_reward_2()
 
-    def init_matrix_ex1(self):
+    def init_matrix_reward_1(self):
         num = -1
         goal_value = 100
         self.cell_values = [[num for _ in range(4)] for _ in range(3)]
         self.cell_values[0][3] = goal_value
         self.Q_matrix = np.random.uniform(low=-1, high=1, size=[3,4,4])
 
-    def init_matrix_ex2(self):
+    def init_matrix_reward_2(self):
         num = -1
         goal_value = 100
         self.cell_values = [[-3, -2, -1, 100],[-4, 0, -2, -1],[-5, -4, -3, -2]]
