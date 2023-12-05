@@ -1,4 +1,4 @@
-import random
+
 import time
 
 import numpy as np
@@ -71,15 +71,12 @@ def drunken_sailor(tablero, factor_epsilon, iterations, alpha, gamma):
     tablero.init_final_states([(0, 3)])
     # Imprimim l'estat inicial del tauler
     tablero.imprimir_tablero()
-    solution = False
     score = 0
     count = 0
     epsilon = 1
     while count < iterations:
-        next_movements, a = tablero.get_possible_next_movements()
         position = tablero.posicion_actual
         random_move = False
-        movement = None
         random_value = random.random()
         if random_value < 1 - epsilon:
             if random.random() < 0.99:
