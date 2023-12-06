@@ -13,6 +13,7 @@ import chess
 import numpy as np
 import sys
 import time
+import ast
 
 from itertools import permutations
 
@@ -112,6 +113,7 @@ class Aichess():
         self.dictVisitedStates = {}
         # Dictionary to reconstruct the BFS path
         self.dictPath = {}
+        self.TA = TA
 
     def getCurrentState(self):
 
@@ -119,8 +121,8 @@ class Aichess():
 
     def getListNextStatesW(self, myState):
 
-        self.chess.boardSim.getListNextStatesW(myState)
-        self.listNextStates = self.chess.boardSim.listNextStates.copy()
+        self.chess.board.getListNextStatesW(myState)
+        self.listNextStates = self.chess.board.listNextStates.copy()
 
         return self.listNextStates
 
@@ -432,10 +434,14 @@ class Aichess():
                     frontera.append((next_state, (self.h(next_state))))
 
     def get_moving_states(self, state, next_state):
+        print(type(next_state))
         if state[0] != next_state[0]:
-            return state[0], next_state[0]
-
-        return state[1], next_state[1]
+            a = state[0]
+            b = next_state[0]
+        else:
+            a = state[1]
+            b = next_state[1]
+        return a, b
 
     def sort_state(self, state):
         if state[0][2] == 6:
@@ -454,13 +460,16 @@ class Aichess():
             next_moves_str = [str(elemento) for elemento in next_movements]
             self.q_table[str(next_state)] = {key: random.uniform(-1, 1) for key in next_moves_str}
         q_state = self.q_table[str(next_state)]
-        q_value = self.q_table[str(state)][str(next_state)] + alpha * (reward + gamma * max(q_state.values()) - self.q_table[str(state)][str(next_state)])
+        if len(q_state.values()) != 0:
+            max_next_q = max(q_state.values())
+        else:
+            max_next_q = float('-inf')
+        q_value = self.q_table[str(state)][str(next_state)] + alpha * (reward + gamma * max_next_q - self.q_table[str(state)][str(next_state)])
         self.q_table[str(state)][str(next_state)] = q_value
         return reward
 
     def q_learning_chess(self, factor_epsilon, iterations, alpha, gamma):
         self.chess.board.print_board()
-
         self.q_table = dict()
         self.cell_values = [[-1 for _ in range(8)] for _ in range(8)]
         score = 0
@@ -468,27 +477,32 @@ class Aichess():
         epsilon = 1
         state = copy.deepcopy(self.getCurrentState())
         next_movements = [(self.sort_state(elemento)) for elemento in self.getListNextStatesW(state)]
-        if str(state) not in self.q_table:
-            next_moves_str = [str(elemento) for elemento in next_movements]
-            self.q_table[str(state)] = {key: random.uniform(-1, 1) for key in next_moves_str}
+        next_moves_str = [str(elemento) for elemento in next_movements]
+        self.q_table[str(state)] = {key: random.uniform(-1, 1) for key in next_moves_str}
 
         while count < iterations:
             q_state = self.q_table[str(state)]
             random_value = random.random()
+            next_movements = [(self.sort_state(elemento)) for elemento in self.getListNextStatesW(state)]
             random_move = False
-            if random_value < 1 - epsilon:
-                next_state = max(q_state, key=q_state.get)
-            else:
-                next_state = random.choice(next_movements)
-                random_move = True
+            next_state = None
+            while next_state is None or (next_state[0][0] == 0 and next_state[0][1] == 4) or (next_state[1][0] == 0 and next_state[1][1] == 4):
+                if random_value < 1 - epsilon:
+                    next_state = max(q_state, key=q_state.get)
+                    next_state = ast.literal_eval(next_state)
+                    if next_state[0][0] == 0 and next_state[0][1] == 4 or next_state[1][0] == 0 and next_state[1][1] == 4:
+                        next_state = random.choice(next_movements)
+                        random_move = True
+                else:
+                    next_state = random.choice(next_movements)
+                    random_move = True
             a, b = self.get_moving_states(state, next_state)
+            print(next_state)
             self.chess.move(a, b)
-            print(self.q_table)
             self.chess.board.print_board()
             print(random_move)
             score += self.update_q(state, next_state, alpha, gamma)
             state = next_state
-            time.sleep(0.6)
             if self.isCheckMate(state):
                 if epsilon > 0:
                     epsilon -= factor_epsilon
@@ -496,9 +510,10 @@ class Aichess():
                 print("ha arribat al objectiu!")
                 print("score:", score, count)
                 self.chess.board.print_board()
-                self.chess.board = self.chess.boardSim
+                self.chess = chess.Chess(self.TA, True)
+                state = copy.deepcopy(self.getCurrentState())
                 score = 0
-                time.sleep(2)
+                time.sleep(1)
 
 
 
@@ -546,4 +561,4 @@ if __name__ == "__main__":
     print("printing board")
     aichess.chess.boardSim.print_board()
 
-    aichess.q_learning_chess(factor_epsilon=0.10,iterations=20, alpha=0.8,gamma=0.3)
+    aichess.q_learning_chess(factor_epsilon=0.10,iterations=100, alpha=0.8,gamma=0.3)
