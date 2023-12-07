@@ -163,19 +163,24 @@ def ex2_c():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    num_ex = 1
-
-    if num_ex == 1:
+    print("[1] ex1 a)")
+    print("[2] ex1 b)")
+    print("[3] ex1 c)")
+    print("[4] ex2 a)")
+    print("[5] ex2 b)")
+    print("[6] ex2 c)")
+    num_ex = input("Quin exerci vols executar?")
+    if num_ex == '1':
         ex1_a()
-    elif num_ex == 2:
+    elif num_ex == '2':
         ex1_b()
-    elif num_ex == 3:
+    elif num_ex == '3':
         ex1_c()
-    elif num_ex == 4:
+    elif num_ex == '4':
         ex2_a()
-    elif num_ex == 5:
+    elif num_ex == '5':
         ex2_b()
-    elif num_ex == 6:
+    elif num_ex == '6':
         ex2_c()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
