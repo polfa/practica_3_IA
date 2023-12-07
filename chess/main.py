@@ -1,12 +1,16 @@
 
 import time
-
+import chess
 import numpy as np
 import random
+import aichess
+
 
 from tablero import Tablero
 
 all_movements = [0, 1, 2 ,3]
+
+
 def get_Q(tablero, movement, position, alpha, gamma):
     movements = tablero.get_possible_next_movements()
     max_next_q = float('-inf')
@@ -17,7 +21,8 @@ def get_Q(tablero, movement, position, alpha, gamma):
     q_table[position][movement] = value
     tablero.Q_matrix = q_table
 
-def Q_learning(tablero, factor_epsilon, iterations, alpha, gamma):
+
+def q_learning(tablero, factor_epsilon, iterations, alpha, gamma):
     # Establim el valor de les cel·les a -1 menys la objectiu a 100
     cell_values = tablero.cell_values
     tablero.init_final_states([(0, 3)])
@@ -65,6 +70,7 @@ def Q_learning(tablero, factor_epsilon, iterations, alpha, gamma):
             score = 0
             time.sleep(0.5)
 
+
 def drunken_sailor(tablero, factor_epsilon, iterations, alpha, gamma):
     # Establim el valor de les cel·les a -1 menys la objectiu a 100
     cell_values = tablero.cell_values
@@ -79,7 +85,7 @@ def drunken_sailor(tablero, factor_epsilon, iterations, alpha, gamma):
         random_move = False
         random_value = random.random()
         if random_value < 1 - epsilon:
-            if random.random() < 0.99:
+            if random.random() > 0.99:
                 movement = np.argmax(tablero.Q_matrix[position])
             else:
                 movement = random.choice(all_movements)
@@ -113,20 +119,63 @@ def drunken_sailor(tablero, factor_epsilon, iterations, alpha, gamma):
             score = 0
             time.sleep(0.5)
 
+
 def ex1_a():
     # Definim tauler per ex1_a
-    Q_learning(Tablero((2, 0), 1),factor_epsilon=0.11,iterations=16, alpha=0.3,gamma=0.8)
+    q_learning(Tablero((2, 0), 1), factor_epsilon=0.11, iterations=16, alpha=0.3, gamma=0.8)
+
 
 def ex1_b():
     # Definim tauler per ex1_b
-    Q_learning(Tablero((2, 0), 2),factor_epsilon=0.15,iterations=16, alpha=0.7,gamma=0.3)
+    q_learning(Tablero((2, 0), 2), factor_epsilon=0.15, iterations=16, alpha=0.7, gamma=0.3)
+
 
 def ex1_c():
     drunken_sailor(Tablero((2, 0), 2),factor_epsilon=0.15,iterations=16, alpha=0.7,gamma=0.3)
 
 
+def init_chess():
+    # intiialize board
+    TA = np.zeros((8, 8))
+    # load initial state
+    # white pieces
+    TA[7][0] = 2
+    TA[7][4] = 6
+    TA[0][4] = 12
+    ac = aichess.Aichess(TA, True)
+    return ac
+
+
+def ex2_a():
+    ac = init_chess()
+    ac.q_learning_chess(part=1, factor_epsilon=0.003,iterations=1000, alpha=0.2,gamma=0.8)
+
+
+def ex2_b():
+    ac = init_chess()
+    ac.q_learning_chess(part=2, factor_epsilon=0.005, iterations=1000, alpha=0.9, gamma=0.1)
+
+
+def ex2_c():
+    ac = init_chess()
+    ac.drunken_sailor(factor_epsilon=0.005, iterations=1000, alpha=0.9, gamma=0.1)
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    ex1_b()
+    num_ex = 1
+
+    if num_ex == 1:
+        ex1_a()
+    elif num_ex == 2:
+        ex1_b()
+    elif num_ex == 3:
+        ex1_c()
+    elif num_ex == 4:
+        ex2_a()
+    elif num_ex == 5:
+        ex2_b()
+    elif num_ex == 6:
+        ex2_c()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

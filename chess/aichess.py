@@ -450,7 +450,7 @@ class Aichess():
             state[1] = aux
         return state
 
-    def update_q(self, state, next_state, alpha, gamma):
+    def update_q_part1(self, state, next_state, alpha, gamma):
         if self.isCheckMate(next_state):
             reward = 100
         else:
@@ -468,7 +468,24 @@ class Aichess():
         self.q_table[str(state)][str(next_state)] = q_value
         return reward
 
-    def q_learning_chess(self, factor_epsilon, iterations, alpha, gamma):
+    def update_q_part2(self, state, next_state, alpha, gamma):
+        reward = -self.h(next_state)
+        if self.isCheckMate(next_state):
+            reward = 100
+        next_movements = [(self.sort_state(elemento)) for elemento in self.getListNextStatesW(next_state)]
+        if str(next_state) not in self.q_table:
+            next_moves_str = [str(elemento) for elemento in next_movements]
+            self.q_table[str(next_state)] = {key: random.uniform(-1, 1) for key in next_moves_str}
+        q_state = self.q_table[str(next_state)]
+        if len(q_state.values()) != 0:
+            max_next_q = max(q_state.values())
+        else:
+            max_next_q = float('-inf')
+        q_value = self.q_table[str(state)][str(next_state)] + alpha * (reward + gamma * max_next_q - self.q_table[str(state)][str(next_state)])
+        self.q_table[str(state)][str(next_state)] = q_value
+        return reward
+
+    def q_learning_chess(self, factor_epsilon, iterations, alpha, gamma, part=1):
         self.chess.board.print_board()
         self.q_table = dict()
         self.cell_values = [[-1 for _ in range(8)] for _ in range(8)]
@@ -491,8 +508,9 @@ class Aichess():
                     next_state = max(q_state, key=q_state.get)
                     next_state = ast.literal_eval(next_state)
                     if next_state[0][0] == 0 and next_state[0][1] == 4 or next_state[1][0] == 0 and next_state[1][1] == 4:
-                        next_state = random.choice(next_movements)
-                        random_move = True
+                        del q_state[str(next_state)]
+                        next_state = max(q_state, key=q_state.get)
+                        next_state = ast.literal_eval(next_state)
                 else:
                     next_state = random.choice(next_movements)
                     random_move = True
@@ -501,26 +519,76 @@ class Aichess():
             self.chess.move(a, b)
             self.chess.board.print_board()
             print(random_move)
-            score += self.update_q(state, next_state, alpha, gamma)
+            if part == 1:
+                score += self.update_q_part1(state, next_state, alpha, gamma)
+            else:
+                score += self.update_q_part2(state, next_state, alpha, gamma)
             state = next_state
             if self.isCheckMate(state):
                 if epsilon > 0:
                     epsilon -= factor_epsilon
                 count += 1
                 print("ha arribat al objectiu!")
-                print("score:", score, count)
+                print("score:", score, "| iteració", count)
                 self.chess.board.print_board()
                 self.chess = chess.Chess(self.TA, True)
                 state = copy.deepcopy(self.getCurrentState())
                 score = 0
-                time.sleep(1)
+                if count > 100 and count % 20 == 0:
+                    time.sleep(1)
 
+    def drunken_sailor(self, factor_epsilon, iterations, alpha, gamma):
+        self.chess.board.print_board()
+        self.q_table = dict()
+        self.cell_values = [[-1 for _ in range(8)] for _ in range(8)]
+        score = 0
+        count = 0
+        epsilon = 1
+        state = copy.deepcopy(self.getCurrentState())
+        next_movements = [(self.sort_state(elemento)) for elemento in self.getListNextStatesW(state)]
+        next_moves_str = [str(elemento) for elemento in next_movements]
+        self.q_table[str(state)] = {key: random.uniform(-1, 1) for key in next_moves_str}
 
-
-
-
-
-
+        while count < iterations:
+            q_state = self.q_table[str(state)]
+            random_value = random.random()
+            next_movements = [(self.sort_state(elemento)) for elemento in self.getListNextStatesW(state)]
+            random_move = False
+            next_state = None
+            while next_state is None or (next_state[0][0] == 0 and next_state[0][1] == 4) or (next_state[1][0] == 0 and next_state[1][1] == 4):
+                if random_value < 1 - epsilon:
+                    if random.random() > 0.95:
+                        next_state = random.choice(next_movements)
+                        random_move = True
+                    else:
+                        next_state = max(q_state, key=q_state.get)
+                        next_state = ast.literal_eval(next_state)
+                        if next_state[0][0] == 0 and next_state[0][1] == 4 or next_state[1][0] == 0 and next_state[1][1] == 4:
+                            del q_state[str(next_state)]
+                            next_state = max(q_state, key=q_state.get)
+                            next_state = ast.literal_eval(next_state)
+                else:
+                    next_state = random.choice(next_movements)
+                    random_move = True
+            a, b = self.get_moving_states(state, next_state)
+            print(next_state)
+            self.chess.move(a, b)
+            self.chess.board.print_board()
+            print(random_move)
+            score += self.update_q_part2(state, next_state, alpha, gamma)
+            state = next_state
+            if self.isCheckMate(state):
+                if epsilon > 0:
+                    epsilon -= factor_epsilon
+                count += 1
+                print("ha arribat al objectiu!")
+                print("score:", score, "| iteració", count)
+                self.chess.board.print_board()
+                self.chess = chess.Chess(self.TA, True)
+                state = copy.deepcopy(self.getCurrentState())
+                score = 0
+                if count > 100 and count % 20 == 0:
+                    time.sleep(1)
 def translate(s):
     """
     Translates traditional board coordinates of chess into list indices
@@ -561,4 +629,6 @@ if __name__ == "__main__":
     print("printing board")
     aichess.chess.boardSim.print_board()
 
-    aichess.q_learning_chess(factor_epsilon=0.10,iterations=100, alpha=0.8,gamma=0.3)
+    aichess.q_learning_chess(part=1, factor_epsilon=0.003,iterations=1000, alpha=0.2,gamma=0.8)
+    aichess.q_learning_chess(part=2, factor_epsilon=0.005, iterations=1000, alpha=0.9, gamma=0.1)
+    aichess.drunken_sailor(factor_epsilon=0.005, iterations=1000, alpha=0.9, gamma=0.1)
