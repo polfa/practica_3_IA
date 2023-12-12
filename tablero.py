@@ -21,6 +21,7 @@ class Tablero:
         self.final_states = []
         self.discount_factor = 0.90
         self.Q_matrix = None
+        self.mean = 1
         if num_reward == 1:
             self.init_matrix_reward_1()
         if num_reward == 2:

@@ -114,6 +114,7 @@ class Aichess():
         # Dictionary to reconstruct the BFS path
         self.dictPath = {}
         self.TA = TA
+        self.mean = 0
 
     def getCurrentState(self):
 
@@ -485,7 +486,24 @@ class Aichess():
         self.q_table[str(state)][str(next_state)] = q_value
         return reward
 
-    def q_learning_chess(self, factor_epsilon, iterations, alpha, gamma, part=1):
+    def is_q_converged(self):
+        # Obtener todos los valores de los diccionarios internos en una lista
+        values = [value for d in self.q_table.values() for value in d.values()]
+
+        # Calcular la media de los valores
+        mean = sum(values) / len(values) if values else 0
+        if abs(self.mean - mean) < 0.00000001:
+            print("HA CONVERGIT L'ALGORITME, MITJA Q_NOVA - Q_ANTIGA < 0.000001")
+            print("Q_ANTIGA --> ", self.mean)
+            print("Q_NOVA --> ", mean)
+            time.sleep(5)
+            return True
+        print("Q_ANTIGA --> ", self.mean)
+        print("Q_NOVA --> ", mean)
+        self.mean = mean
+        return False
+
+    def q_learning_chess(self, factor_epsilon, alpha, gamma, part=1):
         self.chess.board.print_board()
         self.q_table = dict()
         self.cell_values = [[-1 for _ in range(8)] for _ in range(8)]
@@ -496,8 +514,8 @@ class Aichess():
         next_movements = [(self.sort_state(elemento)) for elemento in self.getListNextStatesW(state)]
         next_moves_str = [str(elemento) for elemento in next_movements]
         self.q_table[str(state)] = {key: random.uniform(-1, 1) for key in next_moves_str}
-
-        while count < iterations:
+        is_converged = False
+        while not is_converged:
             q_state = self.q_table[str(state)]
             random_value = random.random()
             next_movements = [(self.sort_state(elemento)) for elemento in self.getListNextStatesW(state)]
@@ -532,12 +550,12 @@ class Aichess():
                 print("score:", score, "| iteració", count)
                 self.chess.board.print_board()
                 self.chess = chess.Chess(self.TA, True)
+                self.chess.board.print_board()
                 state = copy.deepcopy(self.getCurrentState())
                 score = 0
-                if count > 100 and count % 20 == 0:
-                    time.sleep(1)
+                is_converged = self.is_q_converged()
 
-    def drunken_sailor(self, factor_epsilon, iterations, alpha, gamma):
+    def drunken_sailor(self, factor_epsilon, alpha, gamma):
         self.chess.board.print_board()
         self.q_table = dict()
         self.cell_values = [[-1 for _ in range(8)] for _ in range(8)]
@@ -548,8 +566,8 @@ class Aichess():
         next_movements = [(self.sort_state(elemento)) for elemento in self.getListNextStatesW(state)]
         next_moves_str = [str(elemento) for elemento in next_movements]
         self.q_table[str(state)] = {key: random.uniform(-1, 1) for key in next_moves_str}
-
-        while count < iterations:
+        is_converged = False
+        while not is_converged:
             q_state = self.q_table[str(state)]
             random_value = random.random()
             next_movements = [(self.sort_state(elemento)) for elemento in self.getListNextStatesW(state)]
@@ -585,10 +603,10 @@ class Aichess():
                 print("score:", score, "| iteració", count)
                 self.chess.board.print_board()
                 self.chess = chess.Chess(self.TA, True)
+                self.chess.board.print_board()
                 state = copy.deepcopy(self.getCurrentState())
                 score = 0
-                if count > 100 and count % 20 == 0:
-                    time.sleep(1)
+                is_converged = self.is_q_converged()
 def translate(s):
     """
     Translates traditional board coordinates of chess into list indices

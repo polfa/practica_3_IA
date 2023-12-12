@@ -21,8 +21,21 @@ def get_Q(tablero, movement, position, alpha, gamma):
     q_table[position][movement] = value
     tablero.Q_matrix = q_table
 
+def is_q_converged(tablero):
+    media_total = np.mean(tablero.Q_matrix.flatten())
+    if abs(tablero.mean - media_total) < 0.0001:
+        print("HA CONVERGIT L'ALGORITME, MITJA Q_NOVA - Q_ANTIGA < 0.0001")
+        print("Q_ANTIGA --> ", tablero.mean)
+        print("Q_NOVA --> ", media_total)
+        time.sleep(5)
+        return True
+    #print("Q_ANTIGA --> ", tablero.mean)
+    #print("Q_NOVA --> ", media_total)
+    #time.sleep(0.8)
+    tablero.mean = media_total
+    return False
 
-def q_learning(tablero, factor_epsilon, iterations, alpha, gamma):
+def q_learning(tablero, factor_epsilon, alpha, gamma):
     # Establim el valor de les cel·les a -1 menys la objectiu a 100
     cell_values = tablero.cell_values
     tablero.init_final_states([(0, 3)])
@@ -32,7 +45,8 @@ def q_learning(tablero, factor_epsilon, iterations, alpha, gamma):
     score = 0
     count = 0
     epsilon = 1
-    while count < iterations:
+    converged = False
+    while not converged:
         next_movements, a = tablero.get_possible_next_movements()
         position = tablero.posicion_actual
         random_move = False
@@ -68,10 +82,11 @@ def q_learning(tablero, factor_epsilon, iterations, alpha, gamma):
                 tablero.posicion_actual[1]] = 'X'  # Marcar la posición actual con 'X'
             tablero.imprimir_tablero()
             score = 0
-            time.sleep(0.5)
+            #time.sleep(1)
+            converged = is_q_converged(tablero)
 
 
-def drunken_sailor(tablero, factor_epsilon, iterations, alpha, gamma):
+def drunken_sailor(tablero, factor_epsilon, alpha, gamma):
     # Establim el valor de les cel·les a -1 menys la objectiu a 100
     cell_values = tablero.cell_values
     tablero.init_final_states([(0, 3)])
@@ -80,12 +95,13 @@ def drunken_sailor(tablero, factor_epsilon, iterations, alpha, gamma):
     score = 0
     count = 0
     epsilon = 1
-    while count < iterations:
+    converged = False
+    while not converged:
         position = tablero.posicion_actual
         random_move = False
         random_value = random.random()
         if random_value < 1 - epsilon:
-            if random.random() > 0.99:
+            if random.random() < 0.99:
                 movement = np.argmax(tablero.Q_matrix[position])
             else:
                 movement = random.choice(all_movements)
@@ -117,21 +133,22 @@ def drunken_sailor(tablero, factor_epsilon, iterations, alpha, gamma):
                 tablero.posicion_actual[1]] = 'X'  # Marcar la posición actual con 'X'
             tablero.imprimir_tablero()
             score = 0
-            time.sleep(0.5)
+            #time.sleep(0)
+            converged = is_q_converged(tablero)
 
 
 def ex1_a():
     # Definim tauler per ex1_a
-    q_learning(Tablero((2, 0), 1), factor_epsilon=0.11, iterations=16, alpha=0.3, gamma=0.8)
+    q_learning(Tablero((2, 0), 1), factor_epsilon=0.15, alpha=0.9, gamma=0.1)
 
 
 def ex1_b():
     # Definim tauler per ex1_b
-    q_learning(Tablero((2, 0), 2), factor_epsilon=0.15, iterations=16, alpha=0.7, gamma=0.3)
+    q_learning(Tablero((2, 0), 2), factor_epsilon=0.24, alpha=0.99, gamma=0.01)
 
 
 def ex1_c():
-    drunken_sailor(Tablero((2, 0), 2),factor_epsilon=0.15,iterations=16, alpha=0.7,gamma=0.3)
+    drunken_sailor(Tablero((2, 0), 1),factor_epsilon=0.15, alpha=0.9,gamma=0.1)
 
 
 def init_chess():
@@ -145,20 +162,35 @@ def init_chess():
     ac = aichess.Aichess(TA, True)
     return ac
 
+def init_chess_extra():
+    # intiialize board
+    TA = np.zeros((8, 8))
+    # load initial state
+    # white pieces
+    TA[7][0] = 2
+    TA[7][7] = 6
+    TA[0][4] = 12
+    ac = aichess.Aichess(TA, True)
+    return ac
+
 
 def ex2_a():
     ac = init_chess()
-    ac.q_learning_chess(part=1, factor_epsilon=0.003,iterations=1000, alpha=0.2,gamma=0.8)
+    ac.q_learning_chess(part=1, factor_epsilon=0.003, alpha=0.9,gamma=0.2)
 
 
 def ex2_b():
     ac = init_chess()
-    ac.q_learning_chess(part=2, factor_epsilon=0.005, iterations=1000, alpha=0.9, gamma=0.1)
+    ac.q_learning_chess(part=2, factor_epsilon=0.01, alpha=0.99, gamma=0.01)
 
 
 def ex2_c():
     ac = init_chess()
-    ac.drunken_sailor(factor_epsilon=0.005, iterations=1000, alpha=0.9, gamma=0.1)
+    ac.drunken_sailor(factor_epsilon=0.005, alpha=0.90, gamma=0.01)
+
+def ex_f():
+    ac = init_chess_extra()
+    ac.drunken_sailor(factor_epsilon=0.005, alpha=0.90, gamma=0.01)
 
 
 # Press the green button in the gutter to run the script.
@@ -169,6 +201,7 @@ if __name__ == '__main__':
     print("[4] ex2 a)")
     print("[5] ex2 b)")
     print("[6] ex2 c)")
+    print("[7] ex f)")
     num_ex = input("Quin exerci vols executar?")
     if num_ex == '1':
         ex1_a()
@@ -182,5 +215,8 @@ if __name__ == '__main__':
         ex2_b()
     elif num_ex == '6':
         ex2_c()
+    elif num_ex == '7':
+        ex_f()
+
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
